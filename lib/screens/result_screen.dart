@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'; // Import Supabase
-import '../widgets/custom_header.dart';
-import 'inventory_screen.dart'; // Import หน้า Inventory
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'inventory_screen.dart';
 
 class ResultScreen extends StatefulWidget {
-  // รับข้อมูลเป็น List เพื่อรองรับวัตถุดิบหลายชิ้นพร้อมกัน
   final List<dynamic> foundItems;
 
   const ResultScreen({super.key, required this.foundItems});
@@ -17,118 +15,214 @@ class _ResultScreenState extends State<ResultScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF9E6), // สีพื้นหลังครีม
-      body: Column(
-        children: [
-          // --- ส่วนหัว (Header) ---
-          CustomHeader(
-            title: "Result",
-            subtitle: "พบวัตถุดิบ ${widget.foundItems.length} รายการ",
-            showBack: true,
-          ),
-
-          // --- รายการวัตถุดิบ (List) ---
-          Expanded(
-            child: widget.foundItems.isEmpty
-                ? const Center(child: Text("ไม่พบวัตถุดิบ"))
-                : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                    itemCount: widget.foundItems.length,
-                    itemBuilder: (context, index) {
-                      // ส่งข้อมูลทีละชิ้นไปสร้างการ์ด
-                      // และส่ง Callback function เพื่อรับค่าที่แก้ไขกลับมาอัปเดต List หลัก
-                      return IngredientCardItem(
-                        initialData:
-                            widget.foundItems[index] as Map<String, dynamic>,
-                        onUpdate: (key, value) {
-                          // อัปเดตข้อมูลใน List หลักทันทีที่มีการแก้ไขในการ์ดลูก
-                          widget.foundItems[index][key] = value;
-                        },
-                      );
-                    },
-                  ),
-          ),
-
-          // --- ปุ่มกดด้านล่าง (Footer) ---
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 10,
-                  offset: Offset(0, -2),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey[300],
-                      foregroundColor: Colors.black,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+      backgroundColor: const Color(
+        0xFFE3F2FD,
+      ), // 🚀 ปรับสีพื้นหลังเป็นฟ้าอ่อนให้เข้ากับทุกหน้า
+      body: SafeArea(
+        child: Column(
+          children: [
+            // --- 1. ส่วนหัว (Header) แบบเดียวกับหน้าอื่นๆ ---
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20.0,
+                vertical: 15.0,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF7D0), // สีเหลืองพาสเทล
+                        borderRadius: BorderRadius.circular(25),
+                        border: Border.all(color: Colors.blue, width: 2),
+                      ),
+                      child: const Row(
+                        children: [
+                          SizedBox(width: 20),
+                          Icon(Icons.qr_code_scanner, color: Colors.black87),
+                          SizedBox(width: 15),
+                          Text(
+                            "RESULT",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    child: const Text("สแกนใหม่"),
+                  ),
+                  const SizedBox(width: 10),
+                  Container(
+                    height: 50,
+                    width: 50,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF7D0),
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    child: const Icon(Icons.menu, color: Colors.black87),
+                  ),
+                ],
+              ),
+            ),
+
+            // --- 2. ป้ายบอกจำนวนวัตถุดิบ ---
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20.0,
+                vertical: 5.0,
+              ),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  "พบวัตถุดิบ ${widget.foundItems.length} รายการ",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.black87,
                   ),
                 ),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _saveToSupabase, // เรียกฟังก์ชันบันทึก
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            // --- 3. รายการวัตถุดิบ (List) ---
+            Expanded(
+              child: widget.foundItems.isEmpty
+                  ? const Center(
+                      child: Text(
+                        "ไม่พบวัตถุดิบ",
+                        style: TextStyle(color: Colors.black54, fontSize: 16),
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(20, 5, 20, 0),
+                      itemCount: widget.foundItems.length,
+                      itemBuilder: (context, index) {
+                        return IngredientCardItem(
+                          initialData:
+                              widget.foundItems[index] as Map<String, dynamic>,
+                          onUpdate: (key, value) {
+                            widget.foundItems[index][key] = value;
+                          },
+                        );
+                      },
+                    ),
+            ),
+
+            // --- 4. ปุ่มกดด้านล่าง (Footer) ---
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(25),
+                  topRight: Radius.circular(25),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 10,
+                    offset: Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey[300],
+                        foregroundColor: Colors.black,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                      ),
+                      child: const Text(
+                        "สแกนใหม่",
+                        style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Icon(Icons.check, size: 20),
-                        SizedBox(width: 5),
-                        Text("บันทึกทั้งหมด"),
-                      ],
+                  ),
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _saveToSupabase,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.check, size: 20),
+                          SizedBox(width: 5),
+                          Text(
+                            "บันทึกทั้งหมด",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   // --- ฟังก์ชันบันทึกลง Database ---
-  // --- ฟังก์ชันบันทึกลง Database ---
   Future<void> _saveToSupabase() async {
     final supabase = Supabase.instance.client;
     final user = supabase.auth.currentUser;
 
-    if (user == null) return;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('กรุณาล็อกอินก่อนบันทึกข้อมูล'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => const Center(child: CircularProgressIndicator()),
+      builder: (ctx) =>
+          const Center(child: CircularProgressIndicator(color: Colors.blue)),
     );
 
     try {
       for (var item in widget.foundItems) {
         String name = item['name'];
 
-        // 1. ค้นหาว่ามีวัตถุดิบชื่อนี้ที่เพิ่งเพิ่มวันนี้ (หรือถ้าอยากรวมทุกอันก็ไม่ต้องเช็กวัน)
         final existingItem = await supabase
             .from('fridge_items')
             .select('item_id, quantity')
@@ -137,7 +231,6 @@ class _ResultScreenState extends State<ResultScreen> {
             .maybeSingle();
 
         if (existingItem != null) {
-          // 2. ถ้ามีอยู่แล้ว -> ให้อัปเดตจำนวนเพิ่มเข้าไป
           int newQuantity =
               (existingItem['quantity'] ?? 0) + (item['quantity'] as int);
 
@@ -146,7 +239,6 @@ class _ResultScreenState extends State<ResultScreen> {
               .update({'quantity': newQuantity})
               .eq('item_id', existingItem['item_id']);
         } else {
-          // 3. ถ้าไม่มี -> ค่อยทำการ insert ใหม่
           int days = int.tryParse(item['expiry_days'].toString()) ?? 7;
           DateTime expiryDate = DateTime.now().add(Duration(days: days));
 
@@ -162,10 +254,8 @@ class _ResultScreenState extends State<ResultScreen> {
         }
       }
 
-      // ปิด Loading
       if (mounted) Navigator.pop(context);
 
-      // ไปหน้า Inventory
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -181,7 +271,7 @@ class _ResultScreenState extends State<ResultScreen> {
         );
       }
     } catch (e) {
-      if (mounted) Navigator.pop(context); // ปิด Loading
+      if (mounted) Navigator.pop(context);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -199,7 +289,6 @@ class _ResultScreenState extends State<ResultScreen> {
 // ==================================================================
 class IngredientCardItem extends StatefulWidget {
   final Map<String, dynamic> initialData;
-  // Callback เพื่อส่งค่ากลับไป Parent เมื่อมีการแก้ไข
   final Function(String key, dynamic value) onUpdate;
 
   const IngredientCardItem({
@@ -224,7 +313,6 @@ class _IngredientCardItemState extends State<IngredientCardItem> {
     super.initState();
     final data = widget.initialData;
 
-    // กำหนดค่าเริ่มต้น
     nameController = TextEditingController(text: data['name'] ?? '');
 
     int days = 7;
@@ -237,7 +325,6 @@ class _IngredientCardItemState extends State<IngredientCardItem> {
     unit = data['unit'] ?? 'ชิ้น';
     category = data['category'] ?? 'อื่นๆ';
 
-    // เพิ่ม Listener ให้ TextController เพื่อส่งค่ากลับเมื่อพิมพ์เสร็จ
     nameController.addListener(() {
       widget.onUpdate('name', nameController.text);
     });
@@ -255,7 +342,6 @@ class _IngredientCardItemState extends State<IngredientCardItem> {
     super.dispose();
   }
 
-  // ฟังก์ชันเลือก Emoji
   String _getEmoji(String cat) {
     if (cat.contains('ผัก')) return '🥬';
     if (cat.contains('ผลไม้')) return '🍎';
@@ -278,7 +364,7 @@ class _IngredientCardItemState extends State<IngredientCardItem> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: const [
           BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
         ],
@@ -297,7 +383,7 @@ class _IngredientCardItemState extends State<IngredientCardItem> {
                 ),
                 decoration: BoxDecoration(
                   color: Colors.orange.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: Colors.orange.withOpacity(0.3)),
                 ),
                 child: Text(
@@ -317,15 +403,26 @@ class _IngredientCardItemState extends State<IngredientCardItem> {
           // 2. ชื่อวัตถุดิบ
           const Text(
             "ชื่อวัตถุดิบ",
-            style: TextStyle(color: Colors.black87, fontSize: 13),
+            style: TextStyle(
+              color: Colors.black87,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
           ),
           const SizedBox(height: 5),
           TextFormField(
             controller: nameController,
             decoration: InputDecoration(
               isDense: true,
+              filled: true,
+              fillColor: Colors.grey[50],
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade300),
               ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 12,
@@ -339,14 +436,12 @@ class _IngredientCardItemState extends State<IngredientCardItem> {
           // 3. ปริมาณและหน่วย
           Row(
             children: [
-              // ปุ่มลบ
               _buildCounterButton("-", () {
                 if (quantity > 1) {
                   setState(() => quantity--);
-                  widget.onUpdate('quantity', quantity); // ส่งค่ากลับ
+                  widget.onUpdate('quantity', quantity);
                 }
               }),
-              // ตัวเลข
               Container(
                 width: 50,
                 alignment: Alignment.center,
@@ -359,15 +454,13 @@ class _IngredientCardItemState extends State<IngredientCardItem> {
                   ),
                 ),
               ),
-              // ปุ่มบวก
               _buildCounterButton("+", () {
                 setState(() => quantity++);
-                widget.onUpdate('quantity', quantity); // ส่งค่ากลับ
+                widget.onUpdate('quantity', quantity);
               }),
 
               const SizedBox(width: 15),
 
-              // Dropdown หน่วย
               Expanded(
                 child: DropdownButtonFormField<String>(
                   value:
@@ -384,12 +477,19 @@ class _IngredientCardItemState extends State<IngredientCardItem> {
                       : "ชิ้น",
                   decoration: InputDecoration(
                     isDense: true,
+                    filled: true,
+                    fillColor: Colors.grey[50],
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 10,
-                      vertical: 10,
+                      vertical: 12,
                     ),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
                     ),
                   ),
                   items: ["ชิ้น", "กรัม", "กก.", "แพ็ค", "ขวด", "ลูก", "ฟอง"]
@@ -397,7 +497,7 @@ class _IngredientCardItemState extends State<IngredientCardItem> {
                       .toList(),
                   onChanged: (val) {
                     setState(() => unit = val!);
-                    widget.onUpdate('unit', val); // ส่งค่ากลับ
+                    widget.onUpdate('unit', val);
                   },
                 ),
               ),
@@ -411,7 +511,7 @@ class _IngredientCardItemState extends State<IngredientCardItem> {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: const Color(0xFFFFF9C4),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               children: [
@@ -466,17 +566,16 @@ class _IngredientCardItemState extends State<IngredientCardItem> {
     );
   }
 
-  // Helper สร้างปุ่ม + -
   Widget _buildCounterButton(String icon, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       child: Container(
-        width: 35,
-        height: 35,
+        width: 38,
+        height: 38,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: Colors.orange[50],
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(color: Colors.orange.withOpacity(0.3)),
         ),
         child: Text(
