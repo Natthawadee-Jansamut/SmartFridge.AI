@@ -116,18 +116,8 @@ class _ResultScreenState extends State<ResultScreen> {
     final supabase = Supabase.instance.client;
     final user = supabase.auth.currentUser;
 
-    // ✅ 1. เช็คก่อนว่าล็อกอินหรือยัง
-    if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('กรุณาล็อกอินก่อนบันทึกข้อมูล'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return; // หยุดการทำงานทันทีถ้ายังไม่ล็อกอิน
-    }
+    if (user == null) return;
 
-    // แสดง Loading
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -135,21 +125,41 @@ class _ResultScreenState extends State<ResultScreen> {
     );
 
     try {
-      // 2. วนลูปข้อมูลทั้งหมดเพื่อเตรียมบันทึก
       for (var item in widget.foundItems) {
-        int days = int.tryParse(item['expiry_days'].toString()) ?? 7;
-        DateTime expiryDate = DateTime.now().add(Duration(days: days));
+        String name = item['name'];
 
-        // ✅ 3. ส่ง user_id ไปด้วยเพื่อความชัวร์ (ถึง DB จะทำให้แล้วก็เถอะ)
-        await supabase.from('fridge_items').insert({
-          'user_id': user.id, // เพิ่มบรรทัดนี้!
-          'name': item['name'],
-          'category': item['category'],
-          'quantity': item['quantity'],
-          'max_quantity': item['quantity'],
-          'unit': item['unit'],
-          'expiry_date': expiryDate.toIso8601String(),
-        });
+        // 1. ค้นหาว่ามีวัตถุดิบชื่อนี้ที่เพิ่งเพิ่มวันนี้ (หรือถ้าอยากรวมทุกอันก็ไม่ต้องเช็กวัน)
+        final existingItem = await supabase
+            .from('fridge_items')
+            .select('item_id, quantity')
+            .eq('user_id', user.id)
+            .eq('name', name)
+            .maybeSingle();
+
+        if (existingItem != null) {
+          // 2. ถ้ามีอยู่แล้ว -> ให้อัปเดตจำนวนเพิ่มเข้าไป
+          int newQuantity =
+              (existingItem['quantity'] ?? 0) + (item['quantity'] as int);
+
+          await supabase
+              .from('fridge_items')
+              .update({'quantity': newQuantity})
+              .eq('item_id', existingItem['item_id']);
+        } else {
+          // 3. ถ้าไม่มี -> ค่อยทำการ insert ใหม่
+          int days = int.tryParse(item['expiry_days'].toString()) ?? 7;
+          DateTime expiryDate = DateTime.now().add(Duration(days: days));
+
+          await supabase.from('fridge_items').insert({
+            'user_id': user.id,
+            'name': name,
+            'category': item['category'],
+            'quantity': item['quantity'],
+            'max_quantity': item['quantity'],
+            'unit': item['unit'],
+            'expiry_date': expiryDate.toIso8601String(),
+          });
+        }
       }
 
       // ปิด Loading
